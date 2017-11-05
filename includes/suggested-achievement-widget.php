@@ -5,16 +5,16 @@
 class suggested_achievements_widget extends WP_Widget {
 
     //process the new widget
-    function suggested_achievements_widget() {
+    public function __construct() {
         $widget_ops = array(
             'classname' => 'suggested_achievements_class',
             'description' => __( 'Displays suggested achievements for logged in user', 'badgeos-suggested-achievements' )
         );
-        $this->WP_Widget( 'suggested_achievements_widget', __( 'BadgeOS Suggested Achievements', 'badgeos-suggested-achievements' ), $widget_ops );
+        parent::__construct( 'suggested_achievements_widget', __( 'BadgeOS Suggested Achievements', 'badgeos-suggested-achievements' ), $widget_ops );
     }
 
     //build the widget settings form
-    function form( $instance ) {
+	public function form( $instance ) {
         $defaults = array( 'title' => __( 'Suggested Achievements', 'badgeos-suggested-achievements' ), 'number' => '10', 'point_total' => '', 'set_achievements' => '' );
         $instance = wp_parse_args( (array) $instance, $defaults );
         $title = $instance['title'];
@@ -52,7 +52,7 @@ class suggested_achievements_widget extends WP_Widget {
     }
 
     //save and sanitize the widget settings
-    function update( $new_instance, $old_instance ) {
+	public function update( $new_instance, $old_instance ) {
         $instance = $old_instance;
 
         $instance['title'] = sanitize_text_field( $new_instance['title'] );
@@ -64,7 +64,7 @@ class suggested_achievements_widget extends WP_Widget {
     }
 
     //display the widget
-    function widget( $args, $instance ) {
+	public function widget( $args, $instance ) {
         global $user_ID;
 
         extract( $args );
