@@ -2,7 +2,7 @@
 /**
  * Plugin Name: BadgeOS Suggested Achievements Add-On
  * Description: This BadgeOS add-on adds a suggested achievements for user.
- * Version: 1.0.0
+ * Version: 1.0.1
  * License: GNU AGPL
  * Author: LearningTimes, LLC
  * Author URI: https://credly.com/
