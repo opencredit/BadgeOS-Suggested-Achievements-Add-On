@@ -77,7 +77,7 @@ Thanks for asking!  Please do share back code modifications or enhancements you 
 == Changelog ==
 
 = 1.0.1 =
-* - Fix: Achievements to be displayed on all the pages
+* Fix: Achievements to be displayed on all the pages
 
 = 1.0.0 =
 * Intial release
