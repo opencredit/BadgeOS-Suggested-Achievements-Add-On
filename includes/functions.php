@@ -12,11 +12,9 @@ function badgeos_get_suggested_achievements(){
 
     $type = null;
     $current_post_id = null;
-    foreach($posts as $post){
-        if($post->post_type != 'page') {
-            $current_post_id = $post->ID;
-            $type = $post->post_type;
-        }
+    foreach ($posts as $post) {
+        $current_post_id = $post->ID;
+        $type = $post->post_type;
     }
 
     // Fetching achievement types
@@ -28,7 +26,7 @@ function badgeos_get_suggested_achievements(){
         'order' => 'ASC',
     );
 
-    if($type){
+    if ( badgeos_achievement_type_exist( $type ) ) {
         $param['name'] = $type;
     }
 
@@ -293,4 +291,28 @@ function badgeos_is_completed_achievement_types($post_type = NULL){
     return true;
 }
 
+/**
+ * Check if the achievement type exist
+ *
+ * @param int|string $name Post ID or slug fo one achievement post types
+ * @since  1.0.1
+ * @return bool       Return true if achievement type exist, otherwise false
+ */
+function badgeos_achievement_type_exist( $name = 0 ) {
+	$args = array(
+		'posts_per_page' => 1,
+		'post_type'      => 'achievement-type',
+	);
+
+	if ( is_numeric( $name ) && ( $name = absint( $name ) ) ) {
+		$args['p'] = $name;
+	} else {
+		// Try it as slug
+		$args['name'] = $name;
+	}
+
+	$achievement_type = get_posts( $args );
+
+	return ! empty( $achievement_type );
+}
 
