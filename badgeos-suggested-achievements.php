@@ -91,7 +91,7 @@ class BadgeOS_Suggested_Achievements {
         wp_enqueue_style( 'badgeos-suggested-achievements', $this->directory_url . '/css/style.css', null, '1.0.0' );
 
         // Load script
-        wp_enqueue_script( 'badgeos-suggested-achievements', $this->directory_url . '/js/suggested-achievements.js', array() );
+        wp_enqueue_script( 'badgeos-suggested-achievements', $this->directory_url . '/js/suggested-achievements.js', array( 'jquery' ) );
 	}
 
 	/**
