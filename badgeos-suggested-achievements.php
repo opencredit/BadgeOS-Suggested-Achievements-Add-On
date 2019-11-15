@@ -2,15 +2,12 @@
 /**
  * Plugin Name: BadgeOS Suggested Achievements Add-On
  * Description: This BadgeOS add-on adds a suggested achievements for user.
- * Version: 1.0.1
+ * Version: 1.1
  * License: GNU AGPL
  * Author: LearningTimes, LLC
  * Author URI: https://credly.com/
  * Text Domain: badgeos-suggested-achievements
  */
-
-
-
 /**
  * Our main plugin instantiation class
  *
@@ -23,6 +20,7 @@ class BadgeOS_Suggested_Achievements {
 	 *
 	 * @since 1.0.0
 	 */
+	
 	function __construct() {
 
 		// Define plugin constants
@@ -61,7 +59,10 @@ class BadgeOS_Suggested_Achievements {
 
 		// If BadgeOS is available...
 		if ( $this->meets_requirements() ) {
+			require_once( $this->directory_path . '/includes/suggested-ranks-widget.php' );
+			require_once( $this->directory_path . '/includes/suggested-ranks-shortcode.php' );
 			require_once( $this->directory_path . '/includes/suggested-achievement-widget.php' );
+			require_once( $this->directory_path . '/includes/suggested-achievements-shortcode.php' );
 			require_once( $this->directory_path . '/includes/functions.php' );
 		}
 
@@ -76,8 +77,11 @@ class BadgeOS_Suggested_Achievements {
     public function badgeos_register_suggested_achievement_widget() {
 
         // Registering widget
-        if ( class_exists('BadgeOS') && class_exists('suggested_achievements_widget'))
-            register_widget( 'suggested_achievements_widget' );
+        if ( class_exists('BadgeOS') && class_exists('suggested_achievements_widget')) {
+			register_widget( 'suggested_achievements_widget' );
+			register_widget( 'suggested_ranks_widget' );
+		}
+            
     }
 
 	/**
@@ -91,7 +95,10 @@ class BadgeOS_Suggested_Achievements {
         wp_enqueue_style( 'badgeos-suggested-achievements', $this->directory_url . '/css/style.css', null, '1.0.0' );
 
         // Load script
-        wp_enqueue_script( 'badgeos-suggested-achievements', $this->directory_url . '/js/suggested-achievements.js', array() );
+		wp_enqueue_script( 'badgeos-suggested-achievements', $this->directory_url . '/js/suggested-achievements.js', [ 'jquery' ], time(), true );
+		$locallize_array = [];
+		$locallize_array['ajax_url'] = admin_url( 'admin-ajax.php' );
+		wp_localize_script( 'badgeos-suggested-achievements', 'BosSuggestedAcsVars', $locallize_array );
 	}
 
 	/**
@@ -158,3 +165,47 @@ class BadgeOS_Suggested_Achievements {
 
 // Instantiate our class to a global variable that we can access elsewhere
 $GLOBALS['badgeos_reports_addon'] = new BadgeOS_Suggested_Achievements();
+class My_WidgetE_ALL extends WP_Widget {
+
+	/**
+	 * Sets up the widgets name etc
+	 */
+	public function __construct() {
+		$widget_ops = array( 
+			'classname' => 'my_widget',
+			'description' => 'My Widget is awesome',
+		);
+		parent::__construct( 'my_widget', 'My Widget', $widget_ops );
+	}
+
+	/**
+	 * Outputs the content of the widget
+	 *
+	 * @param array $args
+	 * @param array $instance
+	 */
+	public function widget( $args, $instance ) {
+		// outputs the content of the widget
+	}
+
+	/**
+	 * Outputs the options form on admin
+	 *
+	 * @param array $instance The widget options
+	 */
+	public function form( $instance ) {
+		// outputs the options form on admin
+	}
+
+	/**
+	 * Processing widget options on save
+	 *
+	 * @param array $new_instance The new options
+	 * @param array $old_instance The previous options
+	 *
+	 * @return array
+	 */
+	public function update( $new_instance, $old_instance ) {
+		// processes widget options to be saved
+	}
+}
