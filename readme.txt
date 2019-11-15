@@ -1,10 +1,10 @@
 === BadgeOS Suggested Achievements Add-on ===
-Contributors: badgeos, learningtimes, credly, asahitechnologies, wooninjas, rahilwazir
+Contributors: badgeos, learningtimes, credly, asahitechnologies, wooninjas, rahilwazir, farooqabdullah
 Donate link: http://badgeos.org/contribute/donate/
 Tags: badge, badges, openbadges, credly, OBI, mozilla, open badges, achievement, award, reward, engagement, submission, nomination, API, open credit, credit, badgeOS, buddypress, invitation, join, groups, register
-Requires at least: 4.x
-Tested up to: 4.8.3
-Stable tag: 1.0.1
+Requires at least: 4.0
+Tested up to: 5.3
+Stable tag: 1.1
 License: GNU AGPLv3
 License URI: http://www.gnu.org/licenses/agpl-3.0.html
 
@@ -12,11 +12,11 @@ Enhances sites running BuddyPress and BadgeOS by suggesting next possible incomp
 
 == Description ==
 
-A widget that allows the site creator to display badge activities or achievements available to be completed.  As activities are completed they are removed from the list.
+A widget that allows the site creator to display badge/rank activities or achievements/ranks available to be completed.  As activities are completed they are removed from the list.
 
-Site participants have a perpetual view of achievements still to be completed.  Using a widget, this is an easy way for administers to guide participants to new activities.
+Site participants have a perpetual view of achievements/ranks still to be completed.  Using a widget, this is an easy way for administers to guide participants to new activities.
 
-**Note:** You will need to install the free [BadgeOS plugin](http://wordpress.org/extend/plugins/badgeos/ "BadgeOS")&trade; (version 1.4.8 or higher) to use the BadgeOS Community Add-on. You will also need the [BuddyPress plugin](http://wordpress.org/extend/plugins/buddypress/ "BadgeOS") v1.7 or higher installed.
+**Note:** You will need to install the free [BadgeOS plugin](http://wordpress.org/extend/plugins/badgeos/ "BadgeOS")&trade; (version 3.2 or higher) to use the BadgeOS Community Add-on. You will also need the [BuddyPress plugin](http://wordpress.org/extend/plugins/buddypress/ "BadgeOS") v1.7 or higher installed.
 
 [Get the BadgeOS plugin](http://wordpress.org/extend/plugins/badgeos/ "BadgeOS").
 
@@ -75,6 +75,12 @@ Thanks for asking!  Please do share back code modifications or enhancements you 
 [Credly](https://credly.com/ "Credly web site") is the universal way to recognize, store and share life's achievements. We've integrated Credly into BadgeOS because it's downright the easiest, most fun way to collect evidence of all your achievements in one place and then share them out when and where it matters most. There are a rapidly growing number of platforms and apps that are using the Credly "Open Credit" API to enable sharable badges; the BadgeOS WordPress integration is just one great example! Visit us [Credly.com](https://credly.com "Credly on the Web") to learn more or [contact](https://credly.com/contact "Contact us") us for guidance with using the free Open Credit API in your own projects or applications.
 
 == Changelog ==
+
+= 1.1 =
+* New: Added option to display suggested ranks
+* New: Added shortcode to display the suggested achievements
+* New: Added shortcode to display the suggested ranks
+* Fix: Made the add-on compatible with the latest versions of WordPress and BadgeOS
 
 = 1.0.1 =
 * Fix: Achievements to be displayed on all the pages

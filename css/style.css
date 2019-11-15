@@ -9,3 +9,78 @@
 .post-navigation a.skip-achievement::before{
     position: inherit;
 }
+
+.bos_suggested_achs_container {
+    position: relative;
+    width: 100%;
+    max-width: 400px;
+    line-height: 50px;
+  }
+  
+  .bos_suggested_achs_link {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  
+  .overlay {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    /* left: 0; */
+    right: 0;
+    height: 100%;
+    /* width: 100%; */
+    /* opacity: 0; */
+    transition: .3s ease;
+    text-decoration: none;
+    display: none;
+  }
+  
+  .bos_suggested_achs_container:hover .overlay {
+    text-decoration: none;
+    display: block;
+  }
+  
+.icon {
+
+    transform: translate(-50%, -50%);
+    -ms-transform: translate(-50%, -50%);
+    text-align: left;
+    right: 0;
+    top: 0;
+    float: right;
+    background-image: url(icons.png);
+    background-repeat: no-repeat;
+    background-position: 2% 10%;
+    width: 32px !important;
+    height: 32px !important;margin-top: 16px;
+    text-decoration: none;
+}
+a.bos_suggested_achs_skip_link:hover{
+    text-decoration: none;
+}
+.bos_suggested_achs_msg, .bos_suggested_rank_msg {
+    background-color: gray;
+    color: white;
+    border-radius: 5px;
+    padding: 5px;
+    font-size: 15px;
+    text-align: center;
+} 
+
+
+.suggested-achs-pagination { margin: 30px 0px; }
+.suggested-achs-pagination ul { display:block; list-style-type:none; margin:0 auto; padding: 0px; }
+.suggested-achs-pagination li { display:inline-block; list-style-type:none; margin:5px; padding:0;}
+.suggested-achs-pagination span.last,.pagination span.first        { color: #FF0000;}
+.suggested-achs-pagination a:hover, .pagination .active a, .pagination .current {  color:#000; border-color: #b21712; }
+
+.bos_suggested_achs_listing a{
+    text-decoration: none;
+}
+.suggested-achs-pagination ul {
+    float: right;
+}
+
+       

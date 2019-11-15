@@ -2,30 +2,32 @@
 
 if ( ! defined( 'ABSPATH' ) ) exit;
 
-//widget displays suggested achievements for the logged in user
-class suggested_achievements_widget extends WP_Widget {
+//widget displays suggested ranks for the logged in user
+class suggested_ranks_widget extends WP_Widget {
 
 	//process the new widget
 	public function __construct() {
+
 		$widget_ops = array(
-			'classname' => 'suggested_achievements_class',
-			'description' => __( 'Displays suggested achievements for logged in user', 'badgeos-suggested-achievements' )
+			'classname' => 'suggested_ranks_class',
+			'description' => __( 'Displays suggested ranks for logged in user', 'badgeos-suggested-achievements' )
 		);
-		parent::__construct( 'suggested_achievements_widget', __( 'BadgeOS Suggested Achievements', 'badgeos-suggested-achievements' ), $widget_ops );
+
+		parent::__construct( 'suggested_ranks_widget', __( 'BadgeOS Suggested Ranks', 'badgeos-suggested-achievements' ), $widget_ops );
 	}
 
 	//build the widget settings form
 	public function form( $instance ) {
-		$defaults = array( 'title' => __( 'Suggested Achievements', 'badgeos-suggested-achievements' ), 'number' => '10', 'point_total' => '', 'set_achievements' => '' );
+		$defaults = array( 'title' => __( 'Suggested Ranks', 'badgeos-suggested-achievements' ), 'number' => '10', 'point_total' => '', 'set_ranks' => '' );
 		$instance = wp_parse_args( (array) $instance, $defaults );
 		$title = $instance['title'];
 		$number = $instance['number'];
 		$point_total = $instance['point_total'];
 		if( ! isset( $point_total ) || !is_array( $point_total ) )
 			$point_total = array();
-		$set_achievements = ( isset( $instance['set_achievements'] ) ) ? (array) $instance['set_achievements'] : array();
+		$set_ranks = ( isset( $instance['set_ranks'] ) ) ? (array) $instance['set_ranks'] : array();
 		?>
-        <p><label><?php _e( 'Title', 'badgeos-suggested-achievements' ); ?>: <input class="widefat"
+        <p><label><?php _e( 'Title', 'badgeos-suggested-achievements' ); ?>: <input class="widefat" 
                                                                                     name="<?php echo $this->get_field_name( 'title' ); ?>"
                                                                                     type="text"
                                                                                     value="<?php echo esc_attr( $title ); ?>"/></label>
@@ -49,27 +51,33 @@ class suggested_achievements_widget extends WP_Widget {
 				}
 			}
 		?>
-        <p><?php _e( 'Display only the following Achievement Types:', 'badgeos-suggested-achievements' ); ?><br/>
+        <p><?php _e( 'Display only the following Rank Types:', 'badgeos-suggested-achievements' ); ?><br/>
 			<?php
-			//get all registered achievements
-			$achievements = badgeos_get_achievement_types();
+			//get all registered rank types
+			$rank_types = badgeos_get_rank_types_slugs_detailed();
+			if ( !empty( $rank_types ) ) {
+				// Loop rank types current user has earned
+				
+				$settings = ( $exists = get_option( 'badgeos_settings' ) ) ? $exists : array();
+				
+				//loop through all registered ranks
+				foreach ( $rank_types as $rank_key => $rank_type ) {
 
-			//loop through all registered achievements
-			foreach ( $achievements as $achievement_slug => $achievement ) {
+					//hide the step CPT
+					if ( $rank_key == trim( $settings['ranks_step_post_type'] ) )
+						continue;
 
-				//hide the step CPT
-				if ( $achievement['single_name'] == 'step' )
-					continue;
+					//if rank displaying exists in the saved array it is enabled for display
+					$checked = checked( in_array( $rank_key, $set_ranks ), true, false );
 
-				//if achievement displaying exists in the saved array it is enabled for display
-				$checked = checked( in_array( $achievement_slug, $set_achievements ), true, false );
+					echo '<label for="' . $this->get_field_name( 'set_ranks' ) . '_' . esc_attr( $rank_key ) . '">'
+						. '<input type="checkbox" name="' . $this->get_field_name( 'set_ranks' ) . '[]" id="' . $this->get_field_name( 'set_ranks' ) . '_' . esc_attr( $rank_key ) . '" value="' . esc_attr( $rank_key ) . '" ' . $checked . ' />'
+						. ' ' . esc_html( ucfirst( $rank_type['plural_name'] ) )
+						. '</label><br />';
 
-				echo '<label for="' . $this->get_field_name( 'set_achievements' ) . '_' . esc_attr( $achievement_slug ) . '">'
-					. '<input type="checkbox" name="' . $this->get_field_name( 'set_achievements' ) . '[]" id="' . $this->get_field_name( 'set_achievements' ) . '_' . esc_attr( $achievement_slug ) . '" value="' . esc_attr( $achievement_slug ) . '" ' . $checked . ' />'
-					. ' ' . esc_html( ucfirst( $achievement['plural_name'] ) )
-					. '</label><br />';
-
+				}
 			}
+			
 			?>
         </p>
 		<?php
@@ -82,7 +90,7 @@ class suggested_achievements_widget extends WP_Widget {
 		$instance['title'] = sanitize_text_field( $new_instance['title'] );
 		$instance['number'] = absint( $new_instance['number'] );
 		$instance['point_total'] = ( ! empty( $new_instance['point_total'] ) ) ? $new_instance['point_total'] : '';
-		$instance['set_achievements'] = array_map( 'sanitize_text_field', $new_instance['set_achievements'] );
+		$instance['set_ranks'] = array_map( 'sanitize_text_field', $new_instance['set_ranks'] );
 
 		return $instance;
 	}
@@ -117,43 +125,43 @@ class suggested_achievements_widget extends WP_Widget {
 			if ( $instance['point_total'] == 'on' )
 				echo '<p class="badgeos-total-points">' . sprintf( __( 'My Total Points: %s', 'badgeos' ), '<strong>'. number_format( badgeos_get_users_points() ) . '</strong>' ) . '</p>';
 
-			$achievements = badgeos_get_suggested_achievements();
-			//load widget setting for achievement types to display
-			$set_achievements = ( isset( $instance['set_achievements'] ) ) ? $instance['set_achievements'] : '';
-							
-			if( is_array( $set_achievements ) && count( $set_achievements ) > 0 ) {
-				if ( is_array( $achievements ) && ! empty( $achievements ) ) {
-
+			$ranks = badgeos_get_suggested_ranks();
+			//load widget setting for rank types to display
+			$set_ranks = ( isset( $instance['set_ranks'] ) ) ? $instance['set_ranks'] : '';
+				
+			if( is_array( $set_ranks ) && count( $set_ranks ) > 0 ) {
+				if ( is_array( $ranks ) && ! empty( $ranks ) ) {
 					$number_to_show = absint( $instance['number'] );
 					$thecount = 0;
 
 					wp_enqueue_script( 'badgeos-achievements' );
 					wp_enqueue_style( 'badgeos-widget' );
 				
-					echo '<div class="bos_suggested_achs_msg" style="display:none"></div><div class="bos_suggested_achs_ajax_preloader_widget" style="display:none;text-align: center;"><img src="'.$GLOBALS['badgeos_reports_addon']->directory_url.'/css/ajax-loader.gif"></div><ul class="widget-achievements-listing">';
-					foreach ( $achievements as $achievement ) {
+					echo '<div class="bos_suggested_rank_msg" style="display:none"></div><div class="bos_suggested_rank_ajax_preloader_widget" style="display:none;text-align: center;"><img src="'.$GLOBALS['badgeos_reports_addon']->directory_url.'/css/ajax-loader.gif"></div><ul class="widget-ranks-listing">';
+					foreach ( $ranks as $rank ) {
+						
+						//verify rank type is set to display in the widget settings
+						//if $set_ranks is not an array it means nothing is set so show all ranks
+						if ( ! is_array( $set_ranks ) || in_array( get_post_type($rank), $set_ranks ) ) {
 
-						//verify achievement type is set to display in the widget settings
-						//if $set_achievements is not an array it means nothing is set so show all achievements
-						if ( ! is_array( $set_achievements ) || in_array( get_post_type($achievement), $set_achievements ) ) {
-	
 							//exclude step CPT entries from displaying in the widget
-							if ( get_post_type( $achievement ) != 'step' ) {
-	
-								$permalink = get_permalink( $achievement );
-								$title = get_the_title( $achievement );
-								$img = badgeos_get_achievement_post_thumbnail( $achievement, array( 50, 50 ), 'wp-post-image' );
+							$settings = ( $exists = get_option( 'badgeos_settings' ) ) ? $exists : array();
+							if ( get_post_type( $rank ) != trim( $settings['ranks_step_post_type'] ) ) {
+
+								$permalink = get_permalink( $rank );
+								$title = get_the_title( $rank );
+								$img = badgeos_get_rank_image( $rank );
 								$thumb = $img ? '<a class="badgeos-item-thumb" href="' . esc_url( $permalink ) . '">' . $img . '</a>' : '';
 								$class = 'widget-badgeos-item-title';
 								$item_class = $thumb ? ' has-thumb' : '';
-	
-								echo '<li id="widget-achievements-listing-item-' . absint( $achievement ) . '" class="widget-achievements-listing-item' . esc_attr( $item_class ) . '">';
+
+								echo '<li id="widget-ranks-listing-item-' . absint( $rank ) . '" class="widget-ranks-listing-item' . esc_attr( $item_class ) . '">';
 								echo $thumb;
-	
+
 								echo '<div class="bos_suggested_achs_container">
-										<a data-index="'.$achievement.'" class="bos_suggested_achs_link widget-badgeos-item-title ' . esc_attr( $class ) . '" href="' . esc_url( $permalink ) . '">' . esc_html( $title ) . '</a>
+										<a data-index="'.$rank.'" class="bos_suggested_achs_link widget-badgeos-item-title ' . esc_attr( $class ) . '" href="' . esc_url( $permalink ) . '">' . esc_html( $title ) . '</a>
 										<div class="overlay">
-											<a href="javascript:;" data-index="'.$achievement.'" class="bos_suggested_achs_skip_link icon" style="text-decoration: none;" title="'.__( 'Skip Achievement', 'badgeos-suggested-achievements' ).'">
+											<a href="javascript:;" data-index="'.$rank.'" class="bos_suggested_rank_skip_link icon" style="text-decoration: none;" title="'.__( 'Skip Rank', 'badgeos-suggested-achievements' ).'">
 												&nbsp;
 											</a>
 										</div>
@@ -165,18 +173,18 @@ class suggested_achievements_widget extends WP_Widget {
 							}
 						}
 					}
-					echo '</ul><!-- widget-achievements-listing -->';
+					echo '</ul><!-- widget-ranks-listing -->';
 				
 				} else {
-					echo '<div class="bos_suggested_rank_msg">'.__( 'No achievements available to display.', 'badgeos' ).'</div>';
+					echo '<div class="bos_suggested_rank_msg">'.__( 'No ranks available to display.', 'badgeos' ).'</div>';
 				}
 			} else {
-				echo '<div class="bos_suggested_achs_msg">'.__( 'No achievements type selected to display.', 'badgeos' ).'</div>';
+				echo '<div class="bos_suggested_rank_msg">'.__( 'No ranks type selected to display.', 'badgeos' ).'</div>';
 			}
 		} else {
 
 			//user is not logged in so display a message
-			_e( 'You must be logged in to view suggested achievements', 'badgeos' );
+			_e( 'You must be logged in to view suggested ranks', 'badgeos' );
 
 		}
 
@@ -184,3 +192,4 @@ class suggested_achievements_widget extends WP_Widget {
 	}
 
 }
+

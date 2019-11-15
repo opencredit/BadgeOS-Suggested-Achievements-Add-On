@@ -33,13 +33,13 @@ function badgeos_get_suggested_achievements(){
     $achievement_types = get_posts($param);
 
     $achievements_all = array();
-
+    
     // Build achievement type array
     foreach ( $achievement_types as $achievement_type){
         $args = array(
             'posts_per_page'   => -1, // unlimited achievements
             'offset'           => 0,  // start from first row
-            'post_type'        => sanitize_title($achievement_type->post_title), // Filter only achievement type posts from title
+            'post_type'        => sanitize_title( $achievement_type->post_name ), // Filter only achievement type posts from title
             'post__not_in'        => badgeos_get_user_skipped_achievements(), // excluding skipped achievements of user
             'post_status'        => 'publish',
             'suppress_filters' => false,
@@ -109,6 +109,79 @@ function badgeos_get_suggested_achievements(){
     return (array) $achievements_all;
 }
 
+/**
+ * Get a user's badgeos suggested ranks
+ *
+ * @since  1.0.0
+ * @return array       An array of all the rank objects that matched our parameters, or empty if none
+ */
+function badgeos_get_suggested_ranks(){
+
+    global $posts;
+    
+    $type = null;
+    $current_post_id = null;
+    foreach ($posts as $post) {
+        $current_post_id = $post->ID;
+        $type = $post->post_type;
+    }
+    
+    $settings = ( $exists = get_option( 'badgeos_settings' ) ) ? $exists : array();
+    // Fetching rank types
+    $param = array(
+        'posts_per_page'   => -1, // All ranks
+        'offset'           => 0,  // Start from first rank
+        'post_type'=> trim( $settings['ranks_main_post_type'] ), // set post type as rank to filter only ranks
+        'orderby' => 'menu_order',
+        'order' => 'ASC',
+    );
+
+    if ( badgeos_rank_type_exist( $type ) ) {
+        $param['name'] = $type;
+    }
+
+    $rank_types = get_posts($param);
+
+    $ranks_all = array();
+    
+    // Build rank type array
+    foreach ( $rank_types as $rank_type){
+        $args = array(
+            'posts_per_page'   => -1, // unlimited ranks
+            'offset'           => 0,  // start from first row
+            'post_type'        => sanitize_title( $rank_type->post_name ), // Filter only rank type posts from title
+            'post__not_in'        => badgeos_get_user_skipped_ranks(), // excluding skipped ranks of user
+            'post_status'        => 'publish',
+            'suppress_filters' => false,
+            'achievement_relationsihp' => 'any',
+            'orderby' => ' menu_order',
+            'order' => 'ASC',
+        );
+
+        $result = get_posts( $args );
+        foreach($result as $res){
+            $ranks_all[] = $res->ID;
+        }
+    }
+
+    // Build an array of skipped achievements
+    $user_ranks = badgeos_get_user_ranks( array() );
+    foreach($user_ranks as $user_rank){
+        if( ( $key = array_search( $user_rank->rank_id, $ranks_all ) ) !== false ) {
+            unset( $ranks_all[$key] );
+        }
+    }
+
+    foreach($ranks_all as $k => $id){
+        //Remove current post achievement id, remining achievements display under suggested achievements list
+        if($current_post_id == $id){
+            unset($ranks_all[$k]);
+        }
+    }
+
+    // Return result
+    return (array) $ranks_all;
+}
 
 /**
  * Checking Completed step achievement types for all achievements
@@ -215,6 +288,191 @@ function suggested_achievements_skip_ajax(){
 }
 add_action( 'wp_ajax_suggested_achievements_skip_ajax', 'suggested_achievements_skip_ajax' );
 
+/**
+ * Allow users to skip ranks
+ *
+ * @since  1.0.0
+ */
+function suggested_ranks_skip_ajax_callback( ) {
+
+    global $post;
+
+    $rank_id = isset( $_REQUEST[ 'rank_id' ] ) ? $_REQUEST[ 'rank_id' ] : false;
+
+    // Validate rank
+    if( $rank_id ) {
+
+        // Getting skipped achievements by user
+        $skipped_ranks = badgeos_get_user_skipped_ranks();
+
+        // Update skipped achievement list. Ignore if already skipped
+        if( ! empty( $skipped_ranks ) ) {
+            if( ! in_array( $rank_id, $skipped_ranks ) ) {
+                array_push( $skipped_ranks, $rank_id );
+            }
+        } else {
+            $skipped_ranks = array( $rank_id );
+        }
+
+        // Adding skipped achievements for user
+        update_user_meta( absint( get_current_user_id() ), '_badgeos_skipped_ranks', $skipped_ranks );
+
+        $message = __( 'Rank skipped successfully', 'badgeos-suggested-achievements' );
+
+        // Redirecting user page based on achievements
+        $post = get_post( absint( $rank_id ));
+        $next= get_adjacent_post( false, '', false );
+        if( $next ) {
+            $redirect_url = get_post_permalink( $next->ID );
+        } else {
+            $redirect_url = home_url();
+        }
+
+    } else {
+        $message = __( 'Rank not available', 'badgeos-suggested-achievements' );
+    }
+
+    // Response array
+    $response = array(
+        'redirect_url'=> $redirect_url,
+        'message'=> $message
+    );
+
+    // Send back a successful response
+    wp_send_json_success( $response );
+}
+add_action( 'wp_ajax_suggested_ranks_skip_ajax', 'suggested_ranks_skip_ajax_callback' );
+
+/**
+ * Allow users to skip achievements
+ *
+ * @since  1.0.0
+ */
+function suggested_achievements_unskip_ajax(){
+
+    global $post;
+
+    $achievement_id = isset($_REQUEST['achievement_id'])?$_REQUEST['achievement_id']:false;
+
+    // Validate achievement
+    if($achievement_id){
+
+        // Getting skipped achievements by user
+        $skipped_achievements = badgeos_get_user_skipped_achievements();
+
+        // Update skipped achievement list. Ignore if already skipped
+        if(!empty($skipped_achievements)){
+            if( in_array($achievement_id,$skipped_achievements)){
+                
+                $key = array_search($achievement_id, $skipped_achievements);
+                if ($key !== false) {
+                    unset($skipped_achievements[$key]);
+                }
+            }
+        }
+
+        // Adding skipped achievements for user
+        update_user_meta( absint(get_current_user_id() ), '_badgeos_skipped_achievements', $skipped_achievements);
+
+        $message = __( 'Achievement is removed from skipped list successfully', 'badgeos-suggested-achievements' );
+
+        // Redirecting user page based on achievements
+        $post = get_post( absint( $achievement_id ));
+        $next= get_adjacent_post( false, '', false );
+        if($next){
+            $redirect_url = get_post_permalink($next->ID);
+        }else{
+            $redirect_url = home_url();
+        }
+
+    }else{
+        $message = __( 'Achievement not available', 'badgeos-suggested-achievements' );
+    }
+
+    // Response array
+    $response = array(
+        'redirect_url'=> $redirect_url,
+        'message'=> $message
+    );
+
+    // Send back a successful response
+    wp_send_json_success( $response );
+}
+add_action( 'wp_ajax_suggested_achievements_unskip_ajax', 'suggested_achievements_unskip_ajax' );
+
+
+/**
+ * Allow users to skip ranks
+ *
+ * @since  1.0.0
+ */
+function suggested_ranks_unskip_ajax_callback(){
+
+    global $post;
+
+    $rank_id = isset($_REQUEST['rank_id'])?$_REQUEST['rank_id']:false;
+
+    // Validate achievement
+    if( $rank_id ){
+
+        // Getting skipped achievements by user
+        $skipped_ranks = badgeos_get_user_skipped_ranks();
+
+        // Update skipped achievement list. Ignore if already skipped
+        if( ! empty( $skipped_ranks ) ) {
+            if( in_array( $rank_id, $skipped_ranks ) ) {
+                
+                $key = array_search( $rank_id, $skipped_ranks );
+                if ($key !== false) {
+                    unset( $skipped_ranks[ $key ] );
+                }
+            }
+        }
+
+        // Adding skipped achievements for user
+        update_user_meta( absint( get_current_user_id() ), '_badgeos_skipped_ranks', $skipped_ranks );
+
+        $message = __( 'Rank is removed from skipped list successfully', 'badgeos-suggested-achievements' );
+
+        // Redirecting user page based on achievements
+        $post = get_post( absint( $rank_id ));
+        $next= get_adjacent_post( false, '', false );
+        if($next){
+            $redirect_url = get_post_permalink($next->ID);
+        }else{
+            $redirect_url = home_url();
+        }
+
+    }else{
+        $message = __( 'Rank is not available', 'badgeos-suggested-achievements' );
+    }
+
+    // Response array
+    $response = array(
+        'redirect_url'=> $redirect_url,
+        'message'=> $message
+    );
+
+    // Send back a successful response
+    wp_send_json_success( $response );
+}
+add_action( 'wp_ajax_suggested_ranks_unskip_ajax', 'suggested_ranks_unskip_ajax_callback' );
+
+
+/**
+ * Get skipped ranks of the user
+ *
+ * @since  1.0.0
+ */
+function badgeos_get_user_skipped_ranks( $user_id = 0 ){
+
+    if(empty($user_id))
+        $user_id = get_current_user_id();
+
+    $skipped_items = get_user_meta( absint( $user_id ), '_badgeos_skipped_ranks', true );
+
+    return $skipped_items;
+}
 
 /**
  * Get skipped achievements of the user
@@ -228,25 +486,8 @@ function badgeos_get_user_skipped_achievements($user_id=0 ){
 
     $skipped_items = get_user_meta( absint( $user_id ), '_badgeos_skipped_achievements', true );
 
-    return (array) $skipped_items;
+    return $skipped_items;
 }
-
-
-add_filter('next_post_link', 'badgeos_suggested_achievements_skip_link');
-function badgeos_suggested_achievements_skip_link($link) {
-    global $post;
-    $achievement_id = ( badgeos_is_achievement($post) )? $post->ID : "";
-    $link = str_replace('" rel="next">', '?next" rel="next">', $link);
-
-    if( class_exists( 'BadgeOS_Suggested_Achievements' ) &&
-        is_user_logged_in() && badgeos_is_achievement($post) && !badgeos_has_user_earned_achievement($achievement_id, get_current_user_id() )):
-        $link .= '<a href="javascript:void(0);" achievement_id="'.absint( $achievement_id ).'"
-           class="skip-achievement" rel="skip">Skip Achievement</a>';
-    endif;
-
-    return $link;
-}
-
 
 /**
  * Getting Completed achievement types for a logged in User
@@ -316,3 +557,30 @@ function badgeos_achievement_type_exist( $name = 0 ) {
 	return ! empty( $achievement_type );
 }
 
+/**
+ * Check if the rank type exist
+ *
+ * @param int|string $name Post ID or slug fo one rank post types
+ * @since  1.0.1
+ * @return bool       Return true if rank type exist, otherwise false
+ */
+function badgeos_rank_type_exist( $name = 0 ) {
+    
+    $settings = ( $exists = get_option( 'badgeos_settings' ) ) ? $exists : array();
+    
+    $args = array(
+		'posts_per_page' => 1,
+		'post_type'      => trim( $settings['ranks_main_post_type'] ),
+	);
+
+	if ( is_numeric( $name ) && ( $name = absint( $name ) ) ) {
+		$args['p'] = $name;
+	} else {
+		// Try it as slug
+		$args['name'] = $name;
+	}
+
+	$rank_type = get_posts( $args );
+
+	return ! empty( $rank_type );
+}
